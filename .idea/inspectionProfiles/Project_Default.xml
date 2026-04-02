@@ -1,0 +1,52 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="DuplicatedCode" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <Languages>
+        <language minSize="55" name="Java" />
+      </Languages>
+    </inspection_tool>
+    <inspection_tool class="VulnerableLibrariesLocal" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="isIgnoringEnabled" value="true" />
+      <option name="ignoredModules">
+        <list>
+          <option value="RidePet" />
+          <option value="RidePet" />
+          <option value="RidePet" />
+          <option value="RidePet" />
+          <option value="RidePet" />
+          <option value="RidePet" />
+          <option value="RidePet" />
+          <option value="RidePet" />
+          <option value="RidePet" />
+        </list>
+      </option>
+      <option name="ignoredPackages">
+        <list>
+          <option value="commons-lang:commons-lang:2.6" />
+          <option value="com.google.guava:guava:21.0" />
+          <option value="com.google.code.gson:gson:2.8.0" />
+          <option value="org.yaml:snakeyaml:1.19" />
+          <option value="commons-codec:commons-codec:1.10" />
+          <option value="commons-io:commons-io:2.4" />
+          <option value="org.apache.commons:commons-lang3:3.5" />
+          <option value="org.apache.logging.log4j:log4j-core:2.8.1" />
+          <option value="junit:junit:4.10" />
+        </list>
+      </option>
+      <option name="ignoredReasons">
+        <list>
+          <option value="不可利用" />
+          <option value="不可利用" />
+          <option value="不可利用" />
+          <option value="不可利用" />
+          <option value="不可利用" />
+          <option value="不可利用" />
+          <option value="不可利用" />
+          <option value="不可利用" />
+          <option value="不可利用" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

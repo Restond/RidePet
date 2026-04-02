@@ -1,0 +1,25 @@
+settings:
+  language: "zh_CN"
+  debug: false
+  combat_timeout: 10
+
+egg:
+  cooldown: 3000
+  max_pets: 3
+
+attribute_priority:
+  - "sx"
+
+messages:
+  prefix: "§6[坐骑] §r"
+  pet_summoned: "§a宠物已召唤!"
+  pet_removed: "§c宠物已收回!"
+  pet_dead: "§c你的宠物死亡了! 需要 {time} 秒复活"
+  cooldown: "§c请等待 {time} 秒后再试!"
+  no_permission: "§c你没有权限执行此操作!"
+  pet_full: "§c你已拥有最大数量的坐骑!"
+  pet_reviving: "§c宠物正在复活中，还需 {time} 秒!"
+  pet_renamed: "§a宠物已重命名为: {name}"
+  pet_deleted: "§c坐骑已删除!"
+  in_combat: "§c你正处于战斗状态，无法召唤坐骑!"
+  combat_cooldown: "§c还需 {time} 秒脱离战斗后才能召唤坐骑!"

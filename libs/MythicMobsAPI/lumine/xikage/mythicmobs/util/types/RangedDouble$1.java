@@ -1,0 +1,10 @@
+/*    */ package lumine.xikage.mythicmobs.util.types;
+/*    */ 
+/*    */ import io.lumine.xikage.mythicmobs.util.types.RangedDouble;
+/*    */ 
+
+
+/* Location:              D:\JavaProject\RidePet\libs\MythicMobsAPI\!\lumine\xikage\mythicmob\\util\types\RangedDouble$1.class
+ * Java compiler version: 8 (52.0)
+ * JD-Core Version:       1.1.3
+ */

@@ -1,0 +1,58 @@
+id: "default_horse"
+name: "§f普通马"
+description:
+  - "§7一只普通的坐骑"
+  - "§7适合新手使用"
+
+egg:
+  material: "MONSTER_EGG"
+  display_name: "§f[坐骑蛋] 普通马"
+  lore:
+    - "§7右键查看详情"
+    - "§7左键收放坐骑"
+    -
+horse:
+  color: "BROWN"
+  style: "NONE"
+  max_health: 20.0
+
+levels:
+  1:
+    attributes:
+      - "物理攻击 +2"
+      - "移动速度 +5%"
+    revive_time: 30
+    horse_speed: 0.2
+    horse_jump: 0.7
+
+  2:
+    attributes:
+      - "物理攻击 +4"
+      - "移动速度 +8%"
+    revive_time: 60
+    horse_speed: 0.25
+    horse_jump: 0.8
+
+  3:
+    attributes:
+      - "物理攻击 +6"
+      - "移动速度 +12%"
+    revive_time: 120
+    horse_speed: 0.3
+    horse_jump: 0.9
+
+  4:
+    attributes:
+      - "物理攻击 +8"
+      - "移动速度 +15%"
+    revive_time: 300
+    horse_speed: 0.35
+    horse_jump: 1.0
+
+  5:
+    attributes:
+      - "物理攻击 +10"
+      - "移动速度 +20%"
+    revive_time: 600
+    horse_speed: 0.4
+    horse_jump: 1.1

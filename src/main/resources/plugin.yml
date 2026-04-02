@@ -1,0 +1,20 @@
+name: RidePet
+version: '${version}'
+main: com.restond.ridepet.RidePet
+author: Restond
+
+softdepend: [SX-Attribute]
+
+commands:
+  ridepet:
+    description: RidePet插件主命令
+    usage: /ridepet <reload|give>
+    permission: ridepet.admin
+
+permissions:
+  ridepet.use:
+    description: 允许使用坐骑
+    default: true
+  ridepet.admin:
+    description: 管理员权限
+    default: op

@@ -1,0 +1,310 @@
+package com.restond.ridepet;
+
+import com.restond.ridepet.listener.*;
+import com.restond.ridepet.manager.ConfigManager;
+import com.restond.ridepet.manager.DataManager;
+import com.restond.ridepet.manager.PetManager;
+import com.restond.ridepet.pet.PetType;
+import com.restond.ridepet.util.ItemBuilder;
+import org.bukkit.Material;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import org.bukkit.scheduler.BukkitRunnable;
+
+
+public final class RidePet extends JavaPlugin {
+
+    private static RidePet instance;
+    private ConfigManager configManager;
+    private PetManager petManager;
+    private DataManager dataManager;
+    private CombatListener combatListener;
+
+    @Override
+    public void onEnable() {
+        instance = this;
+
+        configManager = new ConfigManager((this));
+        configManager.init();
+
+        petManager = new PetManager(this, configManager);
+
+        dataManager = new DataManager(this, petManager);
+        dataManager.init();
+
+        combatListener = new CombatListener(this);
+        getServer().getPluginManager().registerEvents(combatListener, this);
+
+        registerListeners();
+        registerCommands();
+        startAutoSaveTask();
+        startMemoryCleanupTask();
+
+        getLogger().info("Ride 插件已启用! ");
+    }
+
+    @Override
+    public void onDisable() {
+        getServer().getScheduler().cancelTasks(this);
+        if (dataManager != null) {
+            dataManager.saveAllPlayerData();
+        }
+
+        if (petManager != null) {
+            for (Player player : getServer().getOnlinePlayers()) {
+                petManager.onPlayerQuit(player.getUniqueId());
+                if (combatListener != null) {
+                    combatListener.clearCombatState(player.getUniqueId());
+                }
+            }
+        }
+
+        getLogger().info("RidePet 插件已关闭!");
+    }
+
+    private void registerListeners() {
+        getServer().getPluginManager().registerEvents(new PlayerInteractListener(this), this);
+        getServer().getPluginManager().registerEvents(new PetDeathListener(this), this);
+        getServer().getPluginManager().registerEvents(new VehicleListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), this);
+        getServer().getPluginManager().registerEvents(new GUIListener(this), this);
+        getServer().getPluginManager().registerEvents(new ChatListener(this), this);
+    }
+
+    private void registerCommands() {
+        TabExecutor ridepetCommand = new TabExecutor() {
+            @Override
+            public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+                if (args.length == 0) {
+                    sendHelp(sender);
+                    return true;
+                }
+
+                switch (args[0].toLowerCase()) {
+                    case "reload":
+                        return handleReload(sender);
+                    case "give":
+                        return handleGive(sender, args);
+                    case "list":
+                        return handleList(sender, args);
+                    default:
+                        sendHelp(sender);
+                        return true;
+                }
+            }
+
+            @Override
+            public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+                List<String> completions = new ArrayList<>();
+
+                if (args.length == 1) {
+                    completions.add("reload");
+                    completions.add("give");
+                    completions.add("list");
+                } else if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
+                    for (Player player : getServer().getOnlinePlayers()) {
+                        if (player.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
+                            completions.add(player.getName());
+                        }
+                    }
+                } else if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
+                    for (String typeId : configManager.getAllPetTypeIds()) {
+                        if (typeId.toLowerCase().startsWith(args[2].toLowerCase())) {
+                            completions.add(typeId);
+                        }
+                    }
+                } else if (args.length == 4 && args[0].equalsIgnoreCase("give")) {
+                    completions.add("1");
+                    completions.add("2");
+                    completions.add("3");
+                    completions.add("4");
+                    completions.add("5");
+                }
+
+                return completions;
+            }
+        };
+
+        getCommand("ridepet").setExecutor(ridepetCommand);
+    }
+
+    private boolean handleReload(CommandSender sender) {
+        if (!sender.hasPermission("ridepet.admin")) {
+            sender.sendMessage("§c你没有权限执行此命令！");
+            return true;
+        }
+        configManager.reload();
+        sender.sendMessage("§a[RidePet] 配置已重载！");
+        return true;
+    }
+
+    private boolean handleGive(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("ridepet.admin")) {
+            sender.sendMessage("§c你没有权限执行此命令！");
+            return true;
+        }
+
+        if (args.length < 3) {
+            sender.sendMessage("§c用法: /ridepet give <玩家> <类型ID> [等级]");
+            return true;
+        }
+
+        Player target = getServer().getPlayer(args[1]);
+        if (target == null) {
+            sender.sendMessage("§c玩家不在线！");
+            return true;
+        }
+
+        String typeId = args[2];
+        PetType petType = configManager.getPetType(typeId);
+        if (petType == null) {
+            sender.sendMessage("§c未知的坐骑类型: " + typeId);
+            sender.sendMessage("§7可用类型: " + String.join(", ", configManager.getAllPetTypeIds()));
+            return true;
+        }
+
+        int level = 1;
+        if (args.length >= 4) {
+            try {
+                level = Integer.parseInt(args[3]);
+                if (level < 1 || level > 5) {
+                    sender.sendMessage("§c等级必须在 1-5 之间！");
+                    return true;
+                }
+            } catch (NumberFormatException e) {
+                sender.sendMessage("§c无效的等级！");
+                return true;
+            }
+        }
+
+        ItemStack egg = createPetEgg(petType, level);
+        target.getInventory().addItem(egg);
+
+        target.sendMessage("§a你获得了一个坐骑蛋！");
+        if (sender != target) {
+            sender.sendMessage("§a已给予 " + target.getName() + " 一个坐骑蛋！");
+        }
+
+        return true;
+    }
+
+    private boolean handleList(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("ridepet.admin")) {
+            sender.sendMessage("§c你没有权限执行此命令！");
+            return true;
+        }
+
+        sender.sendMessage("§e--- 坐骑类型 ---");
+        for (String typeId : configManager.getAllPetTypeIds()) {
+            PetType type = configManager.getPetType(typeId);
+            sender.sendMessage("§e" + typeId + " §7- " + type.getName());
+        }
+        return true;
+    }
+
+    private ItemStack createPetEgg(PetType petType, int level) {
+        List<String> lore = new ArrayList<>();
+
+        if (petType.getEggLore() != null && !petType.getEggLore().isEmpty()) {
+            lore.addAll(petType.getEggLore());
+        } else {
+            lore.add("§7[RidePet] 坐骑蛋");
+            lore.add("§7类型: §f" + petType.getId());
+            lore.add("§7等级: §fLv." + level);
+            lore.add("");
+            lore.add("§e左键空中：收放坐骑");
+            lore.add("§e右键：查看坐骑列表");
+        }
+
+        boolean hasPetId = false;
+        for (String line : lore) {
+            if (line.contains(petType.getId())) {
+                hasPetId = true;
+                break;
+            }
+        }
+
+        if (!hasPetId) {
+            lore.add("§7[RidePet] 类型编号: §f" + petType.getId());
+        }
+
+        return new ItemBuilder(Material.MONSTER_EGG)
+                .setDisplayName(petType.getEggDisplayName() != null ? petType.getEggDisplayName() : "§f[坐骑蛋] " + petType.getName())
+                .setLore(lore)
+                .build();
+    }
+
+    private void sendHelp(CommandSender sender) {
+        sender.sendMessage("§e/ridepet reload §7- 重载配置");
+        sender.sendMessage("§e/ridepet give <玩家> <类型> [等级] §7- 给予坐骑蛋");
+        sender.sendMessage("§e/ridepet list §7- 列出坐骑类型");
+    }
+
+    public static RidePet getInstance() {
+        return instance;
+    }
+
+    public ConfigManager getConfigManager() {
+        return configManager;
+    }
+
+    public PetManager getPetManager() {
+        return petManager;
+    }
+
+    public DataManager getDataManager() {
+        return dataManager;
+    }
+
+    public CombatListener getCombatListener() {
+        return combatListener;
+    }
+
+    /** 自动保存任务 */
+    private void startAutoSaveTask() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (dataManager != null) {
+                    dataManager.saveAllPlayerDataAsync();
+                    getLogger().info("[自动保存] 已保存所有玩家坐骑数据");
+                }
+            }
+        }.runTaskTimerAsynchronously(this, 20L * 60 * 60 * 24, 20L * 60 * 60 * 24);
+    }
+
+    /** 内存清理任务 */
+    private void startMemoryCleanupTask() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (petManager != null) {
+                    int cleaned = cleanupOfflinePlayerData();
+                    getLogger().info("[内存清理] 已清理 " + cleaned + " 个离线玩家数据");
+                }
+            }
+        }.runTaskTimer(this, 20L * 60 * 60 * 24 * 7, 20L * 60 * 60 * 24 * 7);
+    }
+
+    /** 清理离线玩家数据 */
+    private int cleanupOfflinePlayerData() {
+        int cleaned = 0;
+
+        for (UUID playerUuid : new java.util.HashSet<>(petManager.getAllPlayerPets().keySet())) {
+            Player player = getServer().getPlayer(playerUuid);
+            if (player == null || !player.isOnline()) {
+                petManager.getAllPlayerPets().remove(playerUuid);
+                cleaned++;
+            }
+        }
+
+        return cleaned;
+    }
+}
