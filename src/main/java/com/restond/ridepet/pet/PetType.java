@@ -1,3 +1,21 @@
+/*
+ * RidePet - A Minecraft mount/ride pet plugin
+ * Copyright (C) 2026  Restond
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.restond.ridepet.pet;
 
 import org.bukkit.configuration.ConfigurationSection;
@@ -21,7 +39,6 @@ public class PetType {
 
     private final Map<Integer, LevelData> levels = new HashMap<>();
 
-    /** 从配置文件加载 */
     public static PetType fromConfig(ConfigurationSection config) {
         PetType petType = new PetType();
 
@@ -57,7 +74,6 @@ public class PetType {
         return petType;
     }
 
-    /** 创建宠物数据 */
     public PetData createPetData(int level) {
         PetData petData = new PetData();
         petData.setPetTypeId(this.id);
@@ -130,7 +146,6 @@ public class PetType {
         return levels;
     }
 
-    /** 等级数据 */
     public static class LevelData {
         private List<String> attributes;
         private int reviveTime;

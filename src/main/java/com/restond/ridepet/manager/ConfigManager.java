@@ -1,3 +1,21 @@
+/*
+ * RidePet - A Minecraft mount/ride pet plugin
+ * Copyright (C) 2026  Restond
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.restond.ridepet.manager;
 
 import com.restond.ridepet.pet.PetType;
@@ -10,7 +28,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/** 配置管理器 */
 public class ConfigManager {
     private final JavaPlugin plugin;
     private final Map<String, PetType> petTypes = new HashMap<>();
@@ -20,7 +37,6 @@ public class ConfigManager {
         this.plugin = plugin;
     }
 
-    /** 初始化配置 */
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void init() {
         plugin.saveDefaultConfig();
@@ -35,12 +51,10 @@ public class ConfigManager {
         plugin.getLogger().info("配置管理器初始化完成，已加载 " + petTypes.size() + " 种宠物");
     }
 
-    /** 复制默认宠物配置 */
     private void copyDefaultPetConfigs() {
         copyResource();
     }
 
-    /** 复制资源文件 */
     private void copyResource() {
         File targetFile = new File(petsFolder, "default.yml");
         if (!targetFile.exists()) {
@@ -48,7 +62,6 @@ public class ConfigManager {
         }
     }
 
-    /** 加载所有宠物配置 */
     private void loadAllPetTypes() {
         petTypes.clear();
 
@@ -64,7 +77,6 @@ public class ConfigManager {
         }
     }
 
-    /** 加载单个宠物配置 */
     private void loadPetType(File file) {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
 
@@ -86,27 +98,22 @@ public class ConfigManager {
         plugin.getLogger().info("配置已重载，当前宠物数量: " + petTypes.size());
     }
 
-    /** 获取宠物类型 */
     public PetType getPetType(String id) {
         return petTypes.get(id);
     }
 
-    /** 获取所有宠物类型ID */
     public Set<String> getAllPetTypeIds() {
         return petTypes.keySet();
     }
 
-    /** 获取所有宠物类型 */
     public Map<String, PetType> getAllPetTypes() {
         return petTypes;
     }
 
-    /** 检查宠物类型是否存在 */
     public boolean hasPetType(String id) {
         return petTypes.containsKey(id);
     }
 
-    /** 获取主配置 */
     public FileConfiguration getConfig() {
         return plugin.getConfig();
     }

@@ -1,3 +1,21 @@
+/*
+ * RidePet - A Minecraft mount/ride pet plugin
+ * Copyright (C) 2026  Restond
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.restond.ridepet.manager;
 
 import com.restond.ridepet.RidePet;
@@ -17,7 +35,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import java.util.*;
 
-/** 宠物管理器 */
 public class PetManager {
     private final RidePet plugin;
     private final ConfigManager configManager;
@@ -49,7 +66,6 @@ public class PetManager {
         }
     }
 
-    /** 召唤坐骑 */
     public boolean summonPet(Player player, PetData petData) {
         if (!checkCooldown(player)) {
             return false;
@@ -119,7 +135,6 @@ public class PetManager {
         return true;
     }
 
-    /** 收回坐骑 */
     public boolean removePet(Player player, PetData petData) {
         if (!petData.isActive() || petData.getEntityUuid() == null) {
             return false;
@@ -151,7 +166,6 @@ public class PetManager {
         return true;
     }
 
-    /** 处理坐骑死亡 */
     public void handlePetDeath(UUID entityUuid) {
         PetData petData = activePetEntities.get(entityUuid);
         if (petData == null) return;
@@ -185,7 +199,6 @@ public class PetManager {
         }
     }
 
-    /** 玩家骑上坐骑 */
     public void onPlayerMount(Player player, UUID entityUuid) {
         PetData petData = activePetEntities.get(entityUuid);
         if (petData != null) {
@@ -194,7 +207,6 @@ public class PetManager {
         }
     }
 
-    /** 玩家下坐骑 */
     public void onPlayerDismount(Player player, UUID entityUuid) {
         PetData petData = activePetEntities.get(entityUuid);
         if (petData != null && petData.isActive()) {
@@ -212,7 +224,6 @@ public class PetManager {
         removeAttributes(player);
     }
 
-    /** 添加宠物给玩家 */
     public boolean addPetToPlayer(UUID playerUuid, PetData petData) {
         List<PetData> pets = playerPets.computeIfAbsent(playerUuid, k -> new ArrayList<>());
 
@@ -225,7 +236,6 @@ public class PetManager {
         return true;
     }
 
-    /** 删除玩家的宠物 */
     public boolean removePetFromPlayer(UUID playerUuid, UUID petUuid) {
         List<PetData> pets = playerPets.get(playerUuid);
         if (pets == null) return false;
@@ -247,17 +257,14 @@ public class PetManager {
         return false;
     }
 
-    /** 获取玩家宠物列表 */
     public List<PetData> getPlayerPets(UUID playerUuid) {
         return playerPets.computeIfAbsent(playerUuid, k -> new ArrayList<>());
     }
 
-    /** 通过实体UUID查找宠物 */
     public PetData getPetByEntityUuid(UUID entityUuid) {
         return activePetEntities.get(entityUuid);
     }
 
-    /** 通过宠物UUID查找 */
     public PetData getPetByPetUuid(UUID playerUuid, UUID petUuid) {
         List<PetData> pets = playerPets.get(playerUuid);
         if (pets == null) return null;
@@ -270,7 +277,6 @@ public class PetManager {
         return null;
     }
 
-    /** 检查冷却时间 */
     private boolean checkCooldown(Player player) {
         Long lastTime = lastActionTime.get(player.getUniqueId());
         if (lastTime == null) return true;
@@ -286,14 +292,12 @@ public class PetManager {
         return true;
     }
 
-    /** 应用属性加成 */
     private void applyAttributes(Player player, PetData petData) {
         if (attributeBridge != null && attributeBridge.isEnabled()) {
             attributeBridge.applyAttributes(player, petData.getAttributeLore());
         }
     }
 
-    /** 移除属性加成 */
     private void removeAttributes(Player player) {
         if (attributeBridge != null && attributeBridge.isEnabled()) {
             attributeBridge.removeAttributes(player);
@@ -363,27 +367,22 @@ public class PetManager {
         return true;
     }
 
-    /** 获取属性桥接 */
     public AttributeBridge getAttributeBridge() {
         return attributeBridge;
     }
 
-    /** 加载玩家数据 */
     public void loadPlayerData(UUID playerUuid, List<PetData> pets) {
         playerPets.put(playerUuid, pets);
     }
 
-    /** 获取所有玩家宠物数据 */
     public Map<UUID, List<PetData>> getAllPlayerPets() {
         return playerPets;
     }
 
-    /** 玩家下线清理 */
     public void onPlayerQuit(UUID playerUuid) {
         List<PetData> pets = playerPets.get(playerUuid);
         if (pets == null) return;
 
-        // 收回该玩家所有活跃的宠物
         for (PetData pet : pets) {
             if (pet.isActive() && pet.getEntityUuid() != null) {
                 Entity entity = plugin.getServer().getEntity(pet.getEntityUuid());

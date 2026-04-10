@@ -1,3 +1,21 @@
+/*
+ * RidePet - A Minecraft mount/ride pet plugin
+ * Copyright (C) 2026  Restond
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.restond.ridepet.manager;
 
 import com.restond.ridepet.RidePet;
@@ -11,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** 数据持久化管理器 */
 public class DataManager {
     private final RidePet plugin;
     private final PetManager petManager;
@@ -23,7 +40,6 @@ public class DataManager {
         this.dataFolder = new File(plugin.getDataFolder(), "data");
     }
 
-    /** 初始化 */
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void init() {
         if (!dataFolder.exists()) {
@@ -33,7 +49,6 @@ public class DataManager {
         plugin.getLogger().info("数据管理器初始化完毕");
     }
 
-    /** 加载所有玩家数据 */
     public void loadAllPlayerData() {
         File[] files = dataFolder.listFiles((dir, name) -> name.endsWith(".yml"));
         if (files == null) return;
@@ -47,7 +62,6 @@ public class DataManager {
         }
     }
 
-    /** 加载单个玩家数据 */
     public void loadAllPlayerDataFile(File file) {
         String fileName = file.getName();
         String uuidString = fileName.substring(0, fileName.length() - 4);
@@ -74,7 +88,6 @@ public class DataManager {
         petManager.loadPlayerData(playerUuid, pets);
     }
 
-    /** 保存玩家数据 */
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void savePlayerData(UUID playerUuid) {
         List<PetData> pets = petManager.getPlayerPets(playerUuid);
@@ -101,19 +114,16 @@ public class DataManager {
         }
     }
 
-    /** 保存所有玩家数据 */
     public void saveAllPlayerData() {
         for (Map.Entry<UUID, List<PetData>> entry : petManager.getAllPlayerPets().entrySet()) {
             savePlayerData(entry.getKey());
         }
     }
 
-    /** 异步保存玩家数据 */
     public void savePlayerDataAsync(UUID playerUuid) {
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> savePlayerData(playerUuid));
     }
 
-    /** 异步保存所有数据 */
     public void saveAllPlayerDataAsync() {
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, this::saveAllPlayerData);
     }

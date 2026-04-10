@@ -1,3 +1,21 @@
+/*
+ * RidePet - A Minecraft mount/ride pet plugin
+ * Copyright (C) 2026  Restond
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.restond.ridepet.pet;
 
 import org.bukkit.configuration.ConfigurationSection;
@@ -145,12 +163,10 @@ public class PetData {
         this.horseJump = horseJump;
     }
 
-    /** 获取属性 Lore */
     public List<String> getAttributeLore() {
         return attributeLore;
     }
 
-    /** 设置属性 Lore */
     public void setAttributeLore(List<String> attributeLore) {
         this.attributeLore = attributeLore;
     }
@@ -163,7 +179,6 @@ public class PetData {
         this.reviveTime = reviveTime;
     }
 
-    /** 获取剩余复活时间 */
     public int getRemainingReviveTime() {
         if (isAlive) return 0;
         long currentTime = System.currentTimeMillis() / 1000;
@@ -171,12 +186,10 @@ public class PetData {
         return Math.max(0, remaining);
     }
 
-    /** 检查是否可以复活 */
     public boolean canRevive() {
         return isAlive || getRemainingReviveTime() <= 0;
     }
 
-    /** 标记死亡 */
     public void markDeath() {
         this.isAlive = false;
         this.isActive = false;
@@ -204,12 +217,8 @@ public class PetData {
 
     public static PetData loadFromConfig(ConfigurationSection config) {
         PetData petData = new PetData();
+        petData.setPetUuid(UUID.fromString(config.getString("pet_uuid")));
 
-        try {
-            petData.setPetUuid(UUID.fromString(config.getString("pet_uuid")));
-        } catch (Exception e) {
-            // UUID 解析失败则保持默认的新 UUID
-        }
 
         petData.setPetTypeId(config.getString("pet_type_id"));
         petData.setCustomName(config.getString("custom_name"));
