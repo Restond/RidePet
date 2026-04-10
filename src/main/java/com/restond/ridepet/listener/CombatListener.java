@@ -67,7 +67,7 @@ public class CombatListener implements Listener {
         }
 
         if (activePet != null) {
-            petManager.removePet(player, activePet);
+            petManager.forceRemovePet(player, activePet);
             plugin.getDataManager().savePlayerDataAsync(playerUuid);
             sendActionBar(player, "§c已自动收回坐骑！");
         }

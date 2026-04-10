@@ -61,7 +61,6 @@ public class PetType {
     public PetData createPetData(int level) {
         PetData petData = new PetData();
         petData.setPetTypeId(this.id);
-        petData.setLevel(level);
         petData.setCustomName(this.name);
         petData.setCurrentHealth(this.maxHealth);
 
@@ -70,12 +69,20 @@ public class PetType {
         petData.setMaxHealth(this.maxHealth);
 
         LevelData levelData = levels.get(level);
+        if (levelData == null && !levels.isEmpty()) {
+            int fallbackLevel = levels.keySet().stream().min(Integer::compare).orElse(1);
+            levelData = levels.get(fallbackLevel);
+            level = fallbackLevel;
+        }
+
         if (levelData != null) {
             petData.setAttributeLore(levelData.attributes);
             petData.setReviveTime(levelData.reviveTime);
             petData.setHorseSpeed(levelData.horseSpeed);
             petData.setHorseJump(levelData.horseJump);
         }
+
+        petData.setLevel(level);
         return petData;
     }
 

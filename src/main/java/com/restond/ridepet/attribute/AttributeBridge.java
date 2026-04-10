@@ -1,9 +1,7 @@
 package com.restond.ridepet.attribute;
 
 import org.bukkit.entity.Player;
-
 import java.util.List;
-import java.util.Map;
 
 /** 属性桥接接口 */
 public interface AttributeBridge {
@@ -19,4 +17,6 @@ public interface AttributeBridge {
 
     /** 移除属性加成 */
     void removeAttributes(Player player);
+
+    double getPlayerMovementSpeed(Player player);
 }

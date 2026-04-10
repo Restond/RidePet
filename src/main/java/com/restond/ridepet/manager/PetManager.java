@@ -5,6 +5,7 @@ import com.restond.ridepet.attribute.AttributeBridge;
 import com.restond.ridepet.attribute.SXAttributeBridge;
 import com.restond.ridepet.listener.CombatListener;
 import com.restond.ridepet.pet.PetData;
+import com.restond.ridepet.pet.PetType;
 import com.restond.ridepet.util.MessageUtil;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -74,14 +75,19 @@ public class PetManager {
 
         for (PetData pet : getPlayerPets(player.getUniqueId())) {
             if (pet.isActive()) {
-                removePet(player, pet);
-                break;
+                player.sendMessage("§c你已有一只坐骑在外，请先收回当前坐骑！");
+                return false;
             }
         }
+
+        updatePetDataFromConfig(petData);
 
         Location spawnLoc = player.getLocation().add(player.getLocation().getDirection().multiply(2));
         Horse horse = (Horse) player.getWorld().spawnEntity(spawnLoc, org.bukkit.entity.EntityType.HORSE);
 
+        horse.setAdult();
+        horse.setAgeLock(true);
+        horse.setMetadata("ridepet_owner", new org.bukkit.metadata.FixedMetadataValue(plugin, player.getUniqueId().toString()));
         horse.setColor(petData.getHorseColor());
         horse.setStyle(petData.getHorseStyle());
         horse.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(petData.getMaxHealth());
@@ -105,11 +111,8 @@ public class PetManager {
 
         petData.setActive(true);
         petData.setEntityUuid(horse.getUniqueId());
-
         activePetEntities.put(horse.getUniqueId(), petData);
-
         lastActionTime.put(player.getUniqueId(), System.currentTimeMillis());
-
         applyAttributes(player, petData);
 
         MessageUtil.send(player, "pet_summoned");
@@ -127,6 +130,8 @@ public class PetManager {
         }
 
         Entity entity = plugin.getServer().getEntity(petData.getEntityUuid());
+        UUID oldEntityUuid = petData.getEntityUuid();
+
         if (entity != null && entity.isValid()) {
             petData.setCurrentHealth(((LivingEntity)entity).getHealth());
             entity.remove();
@@ -134,8 +139,7 @@ public class PetManager {
 
         petData.setActive(false);
         petData.setEntityUuid(null);
-
-        activePetEntities.remove(petData.getEntityUuid());
+        activePetEntities.remove(oldEntityUuid);
 
         if (player.isInsideVehicle()) {
             removeAttributes(player);
@@ -174,6 +178,7 @@ public class PetManager {
                         int reviveTime = petData.getReviveTime();
                         MessageUtil.send(owner, "pet_dead", "time", String.valueOf(reviveTime));
                     }
+                    plugin.getDataManager().savePlayerDataAsync(entry.getKey());
                     return;
                 }
             }
@@ -185,11 +190,25 @@ public class PetManager {
         PetData petData = activePetEntities.get(entityUuid);
         if (petData != null) {
             applyAttributes(player, petData);
+            syncHorseSpeed(player, entityUuid, petData);
         }
     }
 
     /** 玩家下坐骑 */
-    public void onPlayerDismount(Player player) {
+    public void onPlayerDismount(Player player, UUID entityUuid) {
+        PetData petData = activePetEntities.get(entityUuid);
+        if (petData != null && petData.isActive()) {
+            Entity entity = plugin.getServer().getEntity(entityUuid);
+            if (entity instanceof Horse) {
+                Horse horse = (Horse) entity;
+                try {
+                    horse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)
+                            .setBaseValue(petData.getHorseSpeed());
+                } catch (Exception e) {
+                    plugin.getLogger().warning("恢复马速度失败: " + e.getMessage());
+                }
+            }
+        }
         removeAttributes(player);
     }
 
@@ -281,6 +300,69 @@ public class PetManager {
         }
     }
 
+    private void syncHorseSpeed(Player player, UUID entityUuid, PetData petData) {
+        if (attributeBridge == null || !attributeBridge.isEnabled()) return;
+
+        double playerSpeed = attributeBridge.getPlayerMovementSpeed(player);
+        if (playerSpeed < 0) return;
+
+        Entity entity = plugin.getServer().getEntity(entityUuid);
+        if (entity instanceof Horse) {
+            Horse horse = (Horse) entity;
+            try {
+                double finalSpeed = Math.max(petData.getHorseSpeed(), playerSpeed);
+                horse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)
+                        .setBaseValue(finalSpeed);
+            } catch (Exception e) {
+                plugin.getLogger().warning("同步马速度失败: " + e.getMessage());
+            }
+        }
+    }
+
+    private void updatePetDataFromConfig(PetData petData) {
+        PetType petType = configManager.getPetType(petData.getPetTypeId());
+        if (petType == null) return;
+
+        petData.setHorseColor(petType.getHorseColor());
+        petData.setHorseStyle(petType.getHorseStyle());
+        petData.setMaxHealth(petType.getMaxHealth());
+
+        PetType.LevelData levelData = petType.getLevelData(petData.getLevel());
+        if (levelData != null) {
+            petData.setAttributeLore(levelData.getAttributes());
+            petData.setReviveTime(levelData.getReviveTime());
+            petData.setHorseSpeed(levelData.getHorseSpeed());
+            petData.setHorseJump(levelData.getHorseJump());
+        }
+    }
+
+    public boolean forceRemovePet(Player player, PetData petData) {
+        if (!petData.isActive() || petData.getEntityUuid() == null) {
+            return false;
+        }
+
+        Entity entity = plugin.getServer().getEntity(petData.getEntityUuid());
+        UUID oldEntityUuid = petData.getEntityUuid();
+
+        if (entity != null && entity.isValid()) {
+            petData.setCurrentHealth(((LivingEntity)entity).getHealth());
+            entity.remove();
+        }
+
+        petData.setActive(false);
+        petData.setEntityUuid(null);
+        activePetEntities.remove(oldEntityUuid);
+
+        if (player.isInsideVehicle()) {
+            removeAttributes(player);
+        }
+
+        lastActionTime.put(player.getUniqueId(), System.currentTimeMillis());
+
+        MessageUtil.send(player, "pet_removed");
+        return true;
+    }
+
     /** 获取属性桥接 */
     public AttributeBridge getAttributeBridge() {
         return attributeBridge;
@@ -305,13 +387,14 @@ public class PetManager {
         for (PetData pet : pets) {
             if (pet.isActive() && pet.getEntityUuid() != null) {
                 Entity entity = plugin.getServer().getEntity(pet.getEntityUuid());
+                UUID oldEntityUuid = pet.getEntityUuid();
                 if (entity != null && entity.isValid()) {
                     pet.setCurrentHealth(((LivingEntity)entity).getHealth());
                     entity.remove();
                 }
                 pet.setActive(false);
                 pet.setEntityUuid(null);
-                activePetEntities.remove(pet.getEntityUuid());
+                activePetEntities.remove(oldEntityUuid);
             }
         }
 

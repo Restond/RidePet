@@ -121,11 +121,16 @@ public final class RidePet extends JavaPlugin {
                         }
                     }
                 } else if (args.length == 4 && args[0].equalsIgnoreCase("give")) {
-                    completions.add("1");
-                    completions.add("2");
-                    completions.add("3");
-                    completions.add("4");
-                    completions.add("5");
+                    String typeId = args[2];
+                    PetType petType = configManager.getPetType(typeId);
+                    if (petType != null) {
+                        for (Integer level : petType.getLevels().keySet()) {
+                            String levelStr = String.valueOf(level);
+                            if (levelStr.startsWith(args[3])) {
+                                completions.add(levelStr);
+                            }
+                        }
+                    }
                 }
 
                 return completions;
@@ -174,18 +179,26 @@ public final class RidePet extends JavaPlugin {
         if (args.length >= 4) {
             try {
                 level = Integer.parseInt(args[3]);
-                if (level < 1 || level > 5) {
-                    sender.sendMessage("§c等级必须在 1-5 之间！");
-                    return true;
-                }
             } catch (NumberFormatException e) {
                 sender.sendMessage("§c无效的等级！");
                 return true;
             }
         }
 
+        if (!petType.getLevels().containsKey(level)) {
+            sender.sendMessage("§c该坐骑没有配置等级 " + level + "！");
+            sender.sendMessage("§7可用等级: " + petType.getLevels().keySet().stream()
+                    .sorted().map(String::valueOf).collect(java.util.stream.Collectors.joining(", ")));
+            return true;
+        }
+
         ItemStack egg = createPetEgg(petType, level);
-        target.getInventory().addItem(egg);
+
+        java.util.Map<Integer, ItemStack> leftover = target.getInventory().addItem(egg);
+        if (!leftover.isEmpty()) {
+            target.getWorld().dropItemNaturally(target.getLocation(), egg);
+            sender.sendMessage("§e玩家背包已满，坐骑蛋已掉落在地上！");
+        }
 
         target.sendMessage("§a你获得了一个坐骑蛋！");
         if (sender != target) {
@@ -234,6 +247,8 @@ public final class RidePet extends JavaPlugin {
         if (!hasPetId) {
             lore.add("§7[RidePet] 类型编号: §f" + petType.getId());
         }
+
+        lore.add("§7[RidePet] 等级: §f" + level);
 
         return new ItemBuilder(Material.MONSTER_EGG)
                 .setDisplayName(petType.getEggDisplayName() != null ? petType.getEggDisplayName() : "§f[坐骑蛋] " + petType.getName())

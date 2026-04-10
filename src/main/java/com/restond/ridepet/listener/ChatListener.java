@@ -48,11 +48,11 @@ public class ChatListener implements Listener {
                 if (pet != null) {
                     String newName = message;
                     newName = newName.replace("§", "");
+                    newName = newName.replaceAll("&[0-9a-fA-Fk-oK-orR]", "");
                     newName = newName.replaceAll("[\\r\\n\\t]", "");
                     newName = newName.trim();
 
-                    String displayName = newName.replaceAll("&[0-9a-fA-Fk-oK-orR]", "");
-                    if (displayName.isEmpty()) {
+                    if (newName.isEmpty()) {
                         player.sendMessage("§c名称不能为空！");
                         GUIListener.finishRename(playerUuid);
                         return;

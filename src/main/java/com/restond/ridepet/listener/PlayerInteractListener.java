@@ -7,7 +7,6 @@ import com.restond.ridepet.manager.PetManager;
 import com.restond.ridepet.pet.PetData;
 import com.restond.ridepet.pet.PetType;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -74,22 +73,44 @@ public class PlayerInteractListener implements Listener {
     }
 
     private void handleTogglePet(Player player, ItemStack eggItem) {
+        PetType eggPetType = getPetTypeFromEgg(eggItem);
+        int eggLevel = getLevelFromEgg(eggItem);
         List<PetData> pets = petManager.getPlayerPets(player.getUniqueId());
 
-        if (pets.isEmpty()) {
-            PetType petType = getPetTypeFromEgg(eggItem);
-            if (petType != null) {
-                PetData newPet = petType.createPetData(1);
-                if (petManager.addPetToPlayer(player.getUniqueId(), newPet)) {
-                    petManager.summonPet(player, newPet);
+        if (eggPetType != null) {
+            boolean hasSameTypeAndLevel = false;
+            PetData matchedPet = null;
+            for (PetData pet : pets) {
+                if (pet.getPetTypeId().equals(eggPetType.getId()) && pet.getLevel() == eggLevel) {
+                    hasSameTypeAndLevel = true;
+                    matchedPet = pet;
+                    break;
+                }
+            }
 
-                    plugin.getDataManager().savePlayerDataAsync(player.getUniqueId());
+            if (!hasSameTypeAndLevel) {
+                PetData newPet = eggPetType.createPetData(eggLevel);
+                if (petManager.addPetToPlayer(player.getUniqueId(), newPet)) {
+                    if (!petManager.summonPet(player, newPet)) {
+                        player.sendMessage("§c坐骑已添加但暂时无法召唤！");
+                    }
                 } else {
                     player.sendMessage("§c你已拥有最大数量的坐骑！");
                 }
+                plugin.getDataManager().savePlayerDataAsync(player.getUniqueId());
+                return;
             }
+
+            if (matchedPet.isActive()) {
+                petManager.removePet(player, matchedPet);
+            } else {
+                petManager.summonPet(player, matchedPet);
+            }
+            plugin.getDataManager().savePlayerDataAsync(player.getUniqueId());
             return;
         }
+
+        if (pets.isEmpty()) return;
 
         PetData activePet = null;
         for (PetData pet : pets) {
@@ -129,5 +150,25 @@ public class PlayerInteractListener implements Listener {
         }
 
         return null;
+    }
+
+    private int getLevelFromEgg(ItemStack eggItem) {
+        if (eggItem.hasItemMeta() && eggItem.getItemMeta().hasLore()) {
+            List<String> lore = eggItem.getItemMeta().getLore();
+            for (String line : lore) {
+                if (line.contains("[RidePet] 等级:")) {
+                    String levelStr = line.replace("§7[RidePet] 等级: §f", "")
+                            .replace("§7[RidePet] 等级:", "")
+                            .replace("Lv.", "")
+                            .trim();
+                    try {
+                        return Integer.parseInt(levelStr);
+                    } catch (NumberFormatException e) {
+                        return 1;
+                    }
+                }
+            }
+        }
+        return 1;
     }
 }

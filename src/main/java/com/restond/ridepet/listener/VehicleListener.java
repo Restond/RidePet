@@ -34,6 +34,15 @@ public class VehicleListener  implements Listener {
         PetData petData = petManager.getPetByEntityUuid(horse.getUniqueId());
         if (petData == null) return;
 
+        if (horse.hasMetadata("ridepet_owner")) {
+            String ownerUuidStr = horse.getMetadata("ridepet_owner").get(0).asString();
+            if (!player.getUniqueId().toString().equals(ownerUuidStr)) {
+                event.setCancelled(true);
+                player.sendMessage("§c这不是你的坐骑！");
+                return;
+            }
+        }
+
         petManager.onPlayerMount(player, horse.getUniqueId());
     }
 
@@ -51,7 +60,7 @@ public class VehicleListener  implements Listener {
         PetData petData = petManager.getPetByEntityUuid(horse.getUniqueId());
         if (petData == null) return;
 
-        petManager.onPlayerDismount(player);
+        petManager.onPlayerDismount(player, horse.getUniqueId());
     }
 
     public RidePet getPlugin() {

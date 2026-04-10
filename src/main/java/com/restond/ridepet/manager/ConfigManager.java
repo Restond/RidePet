@@ -6,8 +6,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -61,10 +59,7 @@ public class ConfigManager {
             try {
                 loadPetType(file);
             } catch (Exception e) {
-                plugin.getLogger().warning("加载宠物配置失败: " + file.getName());
-                StringWriter sw = new StringWriter();
-                PrintWriter pw = new PrintWriter(sw);
-                e.printStackTrace(pw);
+                plugin.getLogger().warning("加载宠物配置失败: " + file.getName() + " - " + e.getMessage());
             }
         }
     }
@@ -72,13 +67,6 @@ public class ConfigManager {
     /** 加载单个宠物配置 */
     private void loadPetType(File file) {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-
-        try {
-            config.load(file);
-        } catch (Exception e) {
-            plugin.getLogger().warning("加载宠物配置失败: " + file.getName() + " - " + e.getMessage());
-            return;
-        }
 
         PetType petType = PetType.fromConfig(config);
 

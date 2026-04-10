@@ -5,10 +5,9 @@ import github.saukiya.sxattribute.SXAttribute;
 import github.saukiya.sxattribute.api.SXAttributeAPI;
 import github.saukiya.sxattribute.data.attribute.SXAttributeData;
 import org.bukkit.Bukkit;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.List;
 
 /** SX-Attribute 属性桥接实现 */
@@ -28,9 +27,7 @@ public class SXAttributeBridge implements AttributeBridge {
                     enabled = true;
                 }
             } catch (Exception e) {
-                StringWriter sw = new StringWriter();
-                PrintWriter pw = new PrintWriter(sw);
-                e.printStackTrace(pw);
+                RidePet.getInstance().getLogger().warning("SX-Attribute 操作失败: " + e.getMessage());
             }
         }
     }
@@ -59,9 +56,7 @@ public class SXAttributeBridge implements AttributeBridge {
             }
 
         } catch (Exception e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
+            RidePet.getInstance().getLogger().warning("SX-Attribute 操作失败: " + e.getMessage());
         }
     }
 
@@ -75,9 +70,20 @@ public class SXAttributeBridge implements AttributeBridge {
             api.removeEntityAPIData(RidePet.class, player.getUniqueId());
 
         } catch (Exception e) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
+            RidePet.getInstance().getLogger().warning("SX-Attribute 操作失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public double getPlayerMovementSpeed(Player player) {
+        if (!isEnabled()) {
+            return -1;
+        }
+
+        try {
+            return player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getValue();
+        } catch (Exception e) {
+            return -1;
         }
     }
 }

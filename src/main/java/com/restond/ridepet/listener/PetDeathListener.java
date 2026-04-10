@@ -8,7 +8,6 @@ import org.bukkit.entity.Horse;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
-import java.util.UUID;
 
 public class PetDeathListener implements Listener {
     private final RidePet plugin;
@@ -28,21 +27,14 @@ public class PetDeathListener implements Listener {
         PetData petData = petManager.getPetByEntityUuid(entity.getUniqueId());
         if (petData == null) return;
 
-        petManager.handlePetDeath(entity.getUniqueId());
-
         event.getDrops().clear();
         event.setDroppedExp(0);
 
-        for (UUID playerUuid : petManager.getAllPlayerPets().keySet()) {
-            if (petManager.getPetByPetUuid(playerUuid, petData.getPetUuid()) != null) {
-                plugin.getDataManager().savePlayerDataAsync(playerUuid);
-                break;
-            }
-        }
+        petManager.handlePetDeath(entity.getUniqueId());
     }
 
 
-
-
-
+    public RidePet getPlugin() {
+        return plugin;
+    }
 }
