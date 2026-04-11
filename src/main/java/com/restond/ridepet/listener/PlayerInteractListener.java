@@ -109,6 +109,7 @@ public class PlayerInteractListener implements Listener {
             if (!hasSameTypeAndLevel) {
                 PetData newPet = eggPetType.createPetData(eggLevel);
                 if (petManager.addPetToPlayer(player.getUniqueId(), newPet)) {
+                    consumeEgg(player);
                     if (!petManager.summonPet(player, newPet)) {
                         player.sendMessage("§c坐骑已添加但暂时无法召唤！");
                     }
@@ -149,6 +150,15 @@ public class PlayerInteractListener implements Listener {
         }
 
         plugin.getDataManager().savePlayerDataAsync(player.getUniqueId());
+    }
+
+    private void consumeEgg(Player player) {
+        ItemStack item = player.getInventory().getItemInMainHand();
+        if (item.getAmount() > 1) {
+            item.setAmount(item.getAmount() - 1);
+        } else {
+            player.getInventory().setItemInMainHand(null);
+        }
     }
 
     private PetType getPetTypeFromEgg(ItemStack eggItem) {

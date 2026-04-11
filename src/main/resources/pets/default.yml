@@ -1,11 +1,7 @@
 id: "default_horse"
 name: "§f普通马"
-description:
-  - "§7一只普通的坐骑"
-  - "§7适合新手使用"
 
 egg:
-  material: "MONSTER_EGG"
   display_name: "§f[坐骑蛋] 普通马"
   lore:
     - "§7右键查看详情"

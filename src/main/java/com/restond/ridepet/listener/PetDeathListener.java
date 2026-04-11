@@ -45,6 +45,9 @@ public class PetDeathListener implements Listener {
         PetData petData = petManager.getPetByEntityUuid(entity.getUniqueId());
         if (petData == null) return;
 
+        Horse horse = (Horse) entity;
+        horse.getInventory().clear();
+
         event.getDrops().clear();
         event.setDroppedExp(0);
 

@@ -129,19 +129,18 @@ public class PetManager {
         petData.setEntityUuid(horse.getUniqueId());
         activePetEntities.put(horse.getUniqueId(), petData);
         lastActionTime.put(player.getUniqueId(), System.currentTimeMillis());
-        applyAttributes(player, petData);
 
         MessageUtil.send(player, "pet_summoned");
         return true;
     }
 
-    public boolean removePet(Player player, PetData petData) {
+    public void removePet(Player player, PetData petData) {
         if (!petData.isActive() || petData.getEntityUuid() == null) {
-            return false;
+            return;
         }
 
         if (!checkCooldown(player)) {
-            return false;
+            return;
         }
 
         Entity entity = plugin.getServer().getEntity(petData.getEntityUuid());
@@ -156,14 +155,11 @@ public class PetManager {
         petData.setEntityUuid(null);
         activePetEntities.remove(oldEntityUuid);
 
-        if (player.isInsideVehicle()) {
-            removeAttributes(player);
-        }
+        removeAttributes(player);
 
         lastActionTime.put(player.getUniqueId(), System.currentTimeMillis());
 
         MessageUtil.send(player, "pet_removed");
-        return true;
     }
 
     public void handlePetDeath(UUID entityUuid) {
@@ -236,9 +232,9 @@ public class PetManager {
         return true;
     }
 
-    public boolean removePetFromPlayer(UUID playerUuid, UUID petUuid) {
+    public void removePetFromPlayer(UUID playerUuid, UUID petUuid) {
         List<PetData> pets = playerPets.get(playerUuid);
-        if (pets == null) return false;
+        if (pets == null) return;
 
         for (Iterator<PetData> it = pets.iterator(); it.hasNext();) {
             PetData pet = it.next();
@@ -251,10 +247,9 @@ public class PetManager {
                     activePetEntities.remove(pet.getEntityUuid());
                 }
                 it.remove();
-                return true;
+                return;
             }
         }
-        return false;
     }
 
     public List<PetData> getPlayerPets(UUID playerUuid) {
@@ -342,9 +337,9 @@ public class PetManager {
         }
     }
 
-    public boolean forceRemovePet(Player player, PetData petData) {
+    public void forceRemovePet(Player player, PetData petData) {
         if (!petData.isActive() || petData.getEntityUuid() == null) {
-            return false;
+            return;
         }
 
         Entity entity = plugin.getServer().getEntity(petData.getEntityUuid());
@@ -359,18 +354,11 @@ public class PetManager {
         petData.setEntityUuid(null);
         activePetEntities.remove(oldEntityUuid);
 
-        if (player.isInsideVehicle()) {
-            removeAttributes(player);
-        }
+        removeAttributes(player);
 
         lastActionTime.put(player.getUniqueId(), System.currentTimeMillis());
 
         MessageUtil.send(player, "pet_removed");
-        return true;
-    }
-
-    public AttributeBridge getAttributeBridge() {
-        return attributeBridge;
     }
 
     public void loadPlayerData(UUID playerUuid, List<PetData> pets) {
