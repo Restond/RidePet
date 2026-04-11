@@ -97,7 +97,7 @@ public class SXAttributeBridge implements AttributeBridge {
         }
 
         try {
-            return player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getValue();
+            return player.getWalkSpeed();
         } catch (Exception e) {
             return -1;
         }

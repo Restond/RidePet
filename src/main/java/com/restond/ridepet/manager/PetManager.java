@@ -307,20 +307,22 @@ public class PetManager {
     private void syncHorseSpeed(Player player, UUID entityUuid, PetData petData) {
         if (attributeBridge == null || !attributeBridge.isEnabled()) return;
 
-        double playerSpeed = attributeBridge.getPlayerMovementSpeed(player);
-        if (playerSpeed < 0) return;
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            double playerSpeed = attributeBridge.getPlayerMovementSpeed(player);
+            if (playerSpeed < 0) return;
 
-        Entity entity = plugin.getServer().getEntity(entityUuid);
-        if (entity instanceof Horse) {
-            Horse horse = (Horse) entity;
-            try {
-                double finalSpeed = Math.max(petData.getHorseSpeed(), playerSpeed);
-                horse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)
-                        .setBaseValue(finalSpeed);
-            } catch (Exception e) {
-                plugin.getLogger().warning("同步马速度失败: " + e.getMessage());
+            Entity entity = plugin.getServer().getEntity(entityUuid);
+            if (entity instanceof Horse) {
+                Horse horse = (Horse) entity;
+                try {
+                    double finalSpeed = Math.max(petData.getHorseSpeed(), playerSpeed);
+                    horse.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)
+                            .setBaseValue(finalSpeed);
+                } catch (Exception e) {
+                    plugin.getLogger().warning("同步马速度失败: " + e.getMessage());
+                }
             }
-        }
+        }, 2L);
     }
 
     private void updatePetDataFromConfig(PetData petData) {
