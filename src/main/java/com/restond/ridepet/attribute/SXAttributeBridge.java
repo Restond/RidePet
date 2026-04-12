@@ -69,6 +69,7 @@ public class SXAttributeBridge implements AttributeBridge {
 
             if (data != null) {
                 api.setEntityAPIData(RidePet.class, player.getUniqueId(), data);
+                api.updateStats(player);
             }
 
         } catch (Exception e) {
@@ -84,7 +85,7 @@ public class SXAttributeBridge implements AttributeBridge {
 
         try {
             api.removeEntityAPIData(RidePet.class, player.getUniqueId());
-
+            api.updateStats(player);
         } catch (Exception e) {
             RidePet.getInstance().getLogger().warning("SX-Attribute 操作失败: " + e.getMessage());
         }

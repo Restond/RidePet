@@ -317,7 +317,7 @@ public class PetManager {
                     plugin.getLogger().warning("同步马速度失败: " + e.getMessage());
                 }
             }
-        }, 2L);
+        }, 5L);
     }
 
     private void updatePetDataFromConfig(PetData petData) {
@@ -373,6 +373,7 @@ public class PetManager {
         List<PetData> pets = playerPets.get(playerUuid);
         if (pets == null) return;
 
+        boolean needRemoveAttributes = false;
         for (PetData pet : pets) {
             if (pet.isActive() && pet.getEntityUuid() != null) {
                 Entity entity = plugin.getServer().getEntity(pet.getEntityUuid());
@@ -384,6 +385,14 @@ public class PetManager {
                 pet.setActive(false);
                 pet.setEntityUuid(null);
                 activePetEntities.remove(oldEntityUuid);
+                needRemoveAttributes = true;
+            }
+        }
+
+        if (needRemoveAttributes) {
+            Player player = plugin.getServer().getPlayer(playerUuid);
+            if (player != null) {
+                removeAttributes(player);
             }
         }
 
