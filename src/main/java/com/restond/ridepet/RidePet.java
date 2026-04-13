@@ -18,7 +18,6 @@
 
 package com.restond.ridepet;
 
-import com.restond.ridepet.gui.PetListGUI;
 import com.restond.ridepet.listener.*;
 import com.restond.ridepet.manager.ConfigManager;
 import com.restond.ridepet.manager.DataManager;
@@ -93,8 +92,6 @@ public final class RidePet extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PetDeathListener(this), this);
         getServer().getPluginManager().registerEvents(new VehicleListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerQuitListener(this), this);
-        getServer().getPluginManager().registerEvents(new GUIListener(this), this);
-        getServer().getPluginManager().registerEvents(new ChatListener(this), this);
         getServer().getPluginManager().registerEvents(new WorldChangeListener(this), this);
     }
 
@@ -117,9 +114,6 @@ public final class RidePet extends JavaPlugin {
                     case "list":
                         handleList(sender, args);
                         break;
-                    case "gui":
-                        handleGUI(sender);
-                        break;
                     default:
                         sendHelp(sender);
                         break;
@@ -135,7 +129,6 @@ public final class RidePet extends JavaPlugin {
                     completions.add("reload");
                     completions.add("give");
                     completions.add("list");
-                    completions.add("gui");
                 } else if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
                     for (Player player : getServer().getOnlinePlayers()) {
                         if (player.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
@@ -255,20 +248,6 @@ public final class RidePet extends JavaPlugin {
         }
     }
 
-    private void handleGUI(CommandSender sender) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("§c只有玩家可以执行此命令！");
-            return;
-        }
-
-        if (!sender.hasPermission("ridepet.use")) {
-            sender.sendMessage("§c你没有权限执行此命令！");
-            return;
-        }
-
-        PetListGUI.openGUI((Player) sender);
-    }
-
     private ItemStack createPetEgg(PetType petType, int level) {
         List<String> lore = new ArrayList<>();
 
@@ -280,7 +259,6 @@ public final class RidePet extends JavaPlugin {
             lore.add("§7等级: §fLv." + level);
             lore.add("");
             lore.add("§e左键空中：收放坐骑");
-            lore.add("§e右键：查看坐骑列表");
         }
 
         boolean hasPetId = false;
@@ -297,6 +275,12 @@ public final class RidePet extends JavaPlugin {
 
         lore.add("§7[RidePet] 等级: §f" + level);
 
+        if (petType.getExpireMillis() > 0) {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm");
+            long expireTime = System.currentTimeMillis() + petType.getExpireMillis();
+            lore.add("§7[RidePet] 到期时间: §f" + sdf.format(new java.util.Date(expireTime)));
+        }
+
         return new ItemBuilder(Material.MONSTER_EGG)
                 .setDisplayName(petType.getEggDisplayName() != null ? petType.getEggDisplayName() : "§f[坐骑蛋] " + petType.getName())
                 .setLore(lore)
@@ -307,7 +291,6 @@ public final class RidePet extends JavaPlugin {
         sender.sendMessage("§e/ridepet reload §7- 重载配置");
         sender.sendMessage("§e/ridepet give <玩家> <类型> [等级] §7- 给予坐骑蛋");
         sender.sendMessage("§e/ridepet list §7- 列出坐骑类型");
-        sender.sendMessage("§e/ridepet gui §7- 打开坐骑列表");
     }
 
     public static RidePet getInstance() {

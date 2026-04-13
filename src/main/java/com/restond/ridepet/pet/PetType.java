@@ -36,6 +36,7 @@ public class PetType {
     private Horse.Color horseColor;
     private Horse.Style horseStyle;
     private double maxHealth;
+    private long expireMillis;
 
     private final Map<Integer, LevelData> levels = new HashMap<>();
 
@@ -58,6 +59,14 @@ public class PetType {
             petType.horseColor = Horse.Color.valueOf(horseSection.getString("color", "BROWN"));
             petType.horseStyle = Horse.Style.valueOf(horseSection.getString("style", "NONE"));
             petType.maxHealth = horseSection.getDouble("max_health", 20.0);
+        }
+
+        ConfigurationSection optionsSection = config.getConfigurationSection("options");
+        if (optionsSection != null) {
+            String durationStr = optionsSection.getString("duration", "");
+            if (durationStr != null && !durationStr.isEmpty()) {
+                petType.expireMillis = parseDuration(durationStr);
+            }
         }
 
         ConfigurationSection levelsSection = config.getConfigurationSection("levels");
@@ -102,6 +111,26 @@ public class PetType {
         return petData;
     }
 
+    private static long parseDuration(String duration) {
+        long millis = 0;
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(\\d+)([dhm])").matcher(duration.toLowerCase());
+        while (matcher.find()) {
+            int value = Integer.parseInt(matcher.group(1));
+            switch (matcher.group(2)) {
+                case "d":
+                    millis += (long) value * 24 * 60 * 60 * 1000;
+                    break;
+                case "h":
+                    millis += (long) value * 60 * 60 * 1000;
+                    break;
+                case "m":
+                    millis += (long) value * 60 * 1000;
+                    break;
+            }
+        }
+        return millis;
+    }
+
     public String getId() {
         return id;
     }
@@ -136,6 +165,10 @@ public class PetType {
 
     public double getMaxHealth() {
         return maxHealth;
+    }
+
+    public long getExpireMillis() {
+        return expireMillis;
     }
 
     public LevelData getLevelData(int level) {

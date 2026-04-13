@@ -44,15 +44,18 @@ public class ConfigManager {
         petsFolder = new File(plugin.getDataFolder(), "pets");
         if (!petsFolder.exists()) {
             petsFolder.mkdirs();
-            copyDefaultPetConfigs();
         }
+        copyDefaultPetConfigs();
         loadAllPetTypes();
         MessageUtil.init(plugin);
         plugin.getLogger().info("配置管理器初始化完成，已加载 " + petTypes.size() + " 种宠物");
     }
 
     private void copyDefaultPetConfigs() {
-        copyResource();
+        File targetFile = new File(petsFolder, "default.yml");
+        if (!targetFile.exists()) {
+            plugin.saveResource("pets/default.yml", false);
+        }
     }
 
     private void copyResource() {

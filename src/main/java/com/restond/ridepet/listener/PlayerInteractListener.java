@@ -19,7 +19,6 @@
 package com.restond.ridepet.listener;
 
 import com.restond.ridepet.RidePet;
-import com.restond.ridepet.gui.PetListGUI;
 import com.restond.ridepet.manager.ConfigManager;
 import com.restond.ridepet.manager.PetManager;
 import com.restond.ridepet.pet.PetData;
@@ -61,10 +60,14 @@ public class PlayerInteractListener implements Listener {
             return;
         }
 
+        PetType eggPetType = getPetTypeFromEgg(item);
+        if (eggPetType != null && eggPetType.getExpireMillis() > 0 && isEggExpired(item)) {
+            player.sendMessage("§c该坐骑蛋已超过使用时限！");
+            return;
+        }
+
         if (event.getAction() == Action.LEFT_CLICK_AIR) {
             handleTogglePet(player, item);
-        } else if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            PetListGUI.openGUI(player);
         }
     }
 
@@ -109,7 +112,6 @@ public class PlayerInteractListener implements Listener {
             if (!hasSameTypeAndLevel) {
                 PetData newPet = eggPetType.createPetData(eggLevel);
                 if (petManager.addPetToPlayer(player.getUniqueId(), newPet)) {
-                    consumeEgg(player);
                     if (!petManager.summonPet(player, newPet)) {
                         player.sendMessage("§c坐骑已添加但暂时无法召唤！");
                     }
@@ -152,15 +154,6 @@ public class PlayerInteractListener implements Listener {
         plugin.getDataManager().savePlayerDataAsync(player.getUniqueId());
     }
 
-    private void consumeEgg(Player player) {
-        ItemStack item = player.getInventory().getItemInMainHand();
-        if (item.getAmount() > 1) {
-            item.setAmount(item.getAmount() - 1);
-        } else {
-            player.getInventory().setItemInMainHand(null);
-        }
-    }
-
     private PetType getPetTypeFromEgg(ItemStack eggItem) {
         if (!eggItem.hasItemMeta()) return null;
 
@@ -197,5 +190,31 @@ public class PlayerInteractListener implements Listener {
             }
         }
         return 1;
+    }
+
+    private boolean isEggExpired(ItemStack eggItem) {
+        long expireTime = getExpireTimeFromEgg(eggItem);
+        if (expireTime <= 0) return false;
+        return System.currentTimeMillis() > expireTime;
+    }
+
+    private long getExpireTimeFromEgg(ItemStack eggItem) {
+        if (eggItem.hasItemMeta() && eggItem.getItemMeta().hasLore()) {
+            List<String> lore = eggItem.getItemMeta().getLore();
+            for (String line : lore) {
+                if (line.contains("[RidePet] 获取时间:")) {
+                    String timeStr = line.replace("§7[RidePet] 获取时间: §f", "")
+                            .replace("§7[RidePet] 获取时间:", "")
+                            .trim();
+                    try {
+                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm");
+                        return sdf.parse(timeStr).getTime();
+                    } catch (Exception e) {
+                        return -1;
+                    }
+                }
+            }
+        }
+        return -1;
     }
 }

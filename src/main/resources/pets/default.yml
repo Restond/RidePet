@@ -4,13 +4,17 @@ name: "§f普通马"
 egg:
   display_name: "§f[坐骑蛋] 普通马"
   lore:
-    - "§7右键查看详情"
     - "§7左键收放坐骑"
     -
+
 horse:
   color: "BROWN"
   style: "NONE"
   max_health: 20.0
+
+options:
+  # 示例: duration: "7d" / "3h30m" / "1d12h" / "30m"
+  duration: ""
 
 levels:
   1:
