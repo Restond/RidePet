@@ -71,6 +71,11 @@ public class PetManager {
             return false;
         }
 
+        if (petData.isExpired()) {
+            player.sendMessage("§c该坐骑已超过使用时限，无法召唤！");
+            return false;
+        }
+
         CombatListener combatListener = plugin.getCombatListener();
         if (combatListener != null && combatListener.isInCombat(player.getUniqueId())) {
             int remaining = combatListener.getCombatCooldown(player.getUniqueId());

@@ -107,6 +107,9 @@ public class PetType {
             petData.setHorseJump(levelData.horseJump);
         }
 
+        petData.setAcquireTime(System.currentTimeMillis());
+        petData.setExpireMillis(this.expireMillis);
+
         petData.setLevel(level);
         return petData;
     }

@@ -41,6 +41,8 @@ public class PetData {
 
     private List<String> attributeLore = new ArrayList<>();
     private int reviveTime;
+    private long acquireTime;
+    private long expireMillis;
 
     public PetData() {
         this.petUuid = UUID.randomUUID();
@@ -196,6 +198,27 @@ public class PetData {
         this.deathTime = System.currentTimeMillis() / 1000;
     }
 
+    public boolean isExpired() {
+        if (expireMillis <= 0) return false;
+        return System.currentTimeMillis() > acquireTime + expireMillis;
+    }
+
+    public long getAcquireTime() {
+        return acquireTime;
+    }
+
+    public void setAcquireTime(long acquireTime) {
+        this.acquireTime = acquireTime;
+    }
+
+    public long getExpireMillis() {
+        return expireMillis;
+    }
+
+    public void setExpireMillis(long expireMillis) {
+        this.expireMillis = expireMillis;
+    }
+
     public void saveToConfig(ConfigurationSection config) {
         config.set("pet_uuid", petUuid.toString());
         config.set("pet_type_id", petTypeId);
@@ -213,6 +236,8 @@ public class PetData {
 
         config.set("attribute_lore", attributeLore);
         config.set("revive_time", reviveTime);
+        config.set("acquire_time", acquireTime);
+        config.set("expire_millis", expireMillis);
     }
 
     public static PetData loadFromConfig(ConfigurationSection config) {
@@ -247,6 +272,8 @@ public class PetData {
 
         petData.setAttributeLore(config.getStringList("attribute_lore"));
         petData.setReviveTime(config.getInt("revive_time", 30));
+        petData.setAcquireTime(config.getLong("acquire_time", 0));
+        petData.setExpireMillis(config.getLong("expire_millis", 0));
 
         return petData;
     }

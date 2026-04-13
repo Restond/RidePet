@@ -202,9 +202,9 @@ public class PlayerInteractListener implements Listener {
         if (eggItem.hasItemMeta() && eggItem.getItemMeta().hasLore()) {
             List<String> lore = eggItem.getItemMeta().getLore();
             for (String line : lore) {
-                if (line.contains("[RidePet] 获取时间:")) {
-                    String timeStr = line.replace("§7[RidePet] 获取时间: §f", "")
-                            .replace("§7[RidePet] 获取时间:", "")
+                if (line.contains("[RidePet] 到期时间:")) {
+                    String timeStr = line.replace("§7[RidePet] 到期时间: §f", "")
+                            .replace("§7[RidePet] 到期时间:", "")
                             .trim();
                     try {
                         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm");
