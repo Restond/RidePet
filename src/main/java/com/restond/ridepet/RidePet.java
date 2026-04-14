@@ -22,6 +22,7 @@ import com.restond.ridepet.listener.*;
 import com.restond.ridepet.manager.ConfigManager;
 import com.restond.ridepet.manager.DataManager;
 import com.restond.ridepet.manager.PetManager;
+import com.restond.ridepet.pet.PetData;
 import com.restond.ridepet.pet.PetType;
 import com.restond.ridepet.util.ItemBuilder;
 import org.bukkit.Material;
@@ -32,6 +33,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -64,6 +66,7 @@ public final class RidePet extends JavaPlugin {
         registerCommands();
         startAutoSaveTask();
         startMemoryCleanupTask();
+        startExpireCheckTask();
 
         getLogger().info("Ride 插件已启用! ");
     }
@@ -176,6 +179,17 @@ public final class RidePet extends JavaPlugin {
         petManager.getAllPlayerPets().clear();
         dataManager.loadAllPlayerData();
 
+        for (Player player : getServer().getOnlinePlayers()) {
+            List<PetData> pets = petManager.getPlayerPets(player.getUniqueId());
+            pets.removeIf(pet -> {
+                if (pet.isExpired()) {
+                    player.sendMessage("§c坐骑 [" + pet.getCustomName() + "§c] 已过期，已被移除！");
+                    return true;
+                }
+                return false;
+            });
+        }
+
         sender.sendMessage("§a[RidePet] 配置已重载！");
     }
 
@@ -276,8 +290,8 @@ public final class RidePet extends JavaPlugin {
         lore.add("§7[RidePet] 等级: §f" + level);
 
         if (petType.getExpireMillis() > 0) {
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm");
             long expireTime = System.currentTimeMillis() + petType.getExpireMillis();
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
             lore.add("§7[RidePet] 到期时间: §f" + sdf.format(new java.util.Date(expireTime)));
         }
 
@@ -349,5 +363,44 @@ public final class RidePet extends JavaPlugin {
         }
 
         return cleaned;
+    }
+
+    private void startExpireCheckTask() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (Player player : getServer().getOnlinePlayers()) {
+                    try {
+                        List<PetData> pets = petManager.getPlayerPets(player.getUniqueId());
+                        Iterator<PetData> it = pets.iterator();
+                        while (it.hasNext()) {
+                            PetData pet = it.next();
+
+                            if (pet.getExpireMillis() <= 0) {
+                                PetType petType = configManager.getPetType(pet.getPetTypeId());
+                                if (petType != null && petType.getExpireMillis() > 0) {
+                                    pet.setExpireMillis(petType.getExpireMillis());
+                                    if (pet.getAcquireTime() <= 0) {
+                                        pet.setAcquireTime(System.currentTimeMillis());
+                                    }
+                                }
+                            }
+
+                            if (pet.isExpired()) {
+                                if (pet.isActive()) {
+                                    petManager.forceRemovePet(player, pet);
+                                }
+                                it.remove();
+                                player.sendMessage("§c你的坐骑已超过使用时限，已被移除！");
+                                instance.getDataManager().savePlayerDataAsync(player.getUniqueId());
+                            }
+                        }
+                    } catch (Exception e) {
+                        getLogger().warning("[到期检查] 检查玩家 " + player.getName() + " 的坐骑时出错: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.runTaskTimer(this, 20L * 10, 20L * 10);
     }
 }

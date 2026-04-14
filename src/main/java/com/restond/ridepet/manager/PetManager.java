@@ -103,7 +103,16 @@ public class PetManager {
 
         updatePetDataFromConfig(petData);
 
-        Location spawnLoc = player.getLocation().add(player.getLocation().getDirection().multiply(2));
+        Location playerLoc = player.getLocation();
+        org.bukkit.util.Vector direction = playerLoc.getDirection();
+
+        direction.setY(0).normalize();
+        Location spawnLoc = playerLoc.clone().add(direction.multiply(1));
+
+        spawnLoc.setX(Math.floor(spawnLoc.getX()) + 0.5);
+        spawnLoc.setZ(Math.floor(spawnLoc.getZ()) + 0.5);
+        spawnLoc.setY(playerLoc.getY());
+
         Horse horse = (Horse) player.getWorld().spawnEntity(spawnLoc, org.bukkit.entity.EntityType.HORSE);
 
         horse.setAdult();
@@ -237,44 +246,12 @@ public class PetManager {
         return true;
     }
 
-    public void removePetFromPlayer(UUID playerUuid, UUID petUuid) {
-        List<PetData> pets = playerPets.get(playerUuid);
-        if (pets == null) return;
-
-        for (Iterator<PetData> it = pets.iterator(); it.hasNext();) {
-            PetData pet = it.next();
-            if (pet.getPetUuid().equals(petUuid)) {
-                if (pet.isActive() && pet.getEntityUuid() != null) {
-                    Entity entity = plugin.getServer().getEntity(pet.getEntityUuid());
-                    if (entity != null && entity.isValid()) {
-                        entity.remove();
-                    }
-                    activePetEntities.remove(pet.getEntityUuid());
-                }
-                it.remove();
-                return;
-            }
-        }
-    }
-
     public List<PetData> getPlayerPets(UUID playerUuid) {
         return playerPets.computeIfAbsent(playerUuid, k -> new ArrayList<>());
     }
 
     public PetData getPetByEntityUuid(UUID entityUuid) {
         return activePetEntities.get(entityUuid);
-    }
-
-    public PetData getPetByPetUuid(UUID playerUuid, UUID petUuid) {
-        List<PetData> pets = playerPets.get(playerUuid);
-        if (pets == null) return null;
-
-        for (PetData pet : pets) {
-            if (pet.getPetUuid().equals(petUuid)) {
-                return pet;
-            }
-        }
-        return null;
     }
 
     private boolean checkCooldown(Player player) {
@@ -339,6 +316,13 @@ public class PetManager {
             petData.setReviveTime(levelData.getReviveTime());
             petData.setHorseSpeed(levelData.getHorseSpeed());
             petData.setHorseJump(levelData.getHorseJump());
+        }
+
+        if (petData.getExpireMillis() <= 0 && petType.getExpireMillis() > 0) {
+            petData.setExpireMillis(petType.getExpireMillis());
+            if (petData.getAcquireTime() <= 0) {
+                petData.setAcquireTime(System.currentTimeMillis());
+            }
         }
     }
 

@@ -61,8 +61,33 @@ public class PlayerInteractListener implements Listener {
         }
 
         PetType eggPetType = getPetTypeFromEgg(item);
-        if (eggPetType != null && eggPetType.getExpireMillis() > 0 && isEggExpired(item)) {
-            player.sendMessage("§c该坐骑蛋已超过使用时限！");
+        boolean eggExpired = isEggExpired(item);
+
+        if (eggExpired) {
+            boolean hasActivePet = false;
+            List<PetData> pets = petManager.getPlayerPets(player.getUniqueId());
+            for (PetData pet : pets) {
+                if (eggPetType != null && pet.getPetTypeId().equals(eggPetType.getId()) && pet.isActive()) {
+                    hasActivePet = true;
+                    break;
+                }
+            }
+
+            if (!hasActivePet) {
+                player.sendMessage("§c该坐骑蛋已超过使用时限！");
+                return;
+            }
+
+            if (event.getAction() == Action.LEFT_CLICK_AIR) {
+                for (PetData pet : pets) {
+                    if (pet.getPetTypeId().equals(eggPetType.getId()) && pet.isActive()) {
+                        petManager.forceRemovePet(player, pet);
+                        player.sendMessage("§c该坐骑已超过使用时限，已自动收回！");
+                        plugin.getDataManager().savePlayerDataAsync(player.getUniqueId());
+                        break;
+                    }
+                }
+            }
             return;
         }
 
@@ -193,8 +218,12 @@ public class PlayerInteractListener implements Listener {
     }
 
     private boolean isEggExpired(ItemStack eggItem) {
+        PetType petType = getPetTypeFromEgg(eggItem);
+        if (petType == null || petType.getExpireMillis() <= 0) return false;
+
         long expireTime = getExpireTimeFromEgg(eggItem);
         if (expireTime <= 0) return false;
+
         return System.currentTimeMillis() > expireTime;
     }
 
@@ -207,8 +236,9 @@ public class PlayerInteractListener implements Listener {
                             .replace("§7[RidePet] 到期时间:", "")
                             .trim();
                     try {
-                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm");
-                        return sdf.parse(timeStr).getTime();
+                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                        java.util.Date date = sdf.parse(timeStr);
+                        return date.getTime();
                     } catch (Exception e) {
                         return -1;
                     }
