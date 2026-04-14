@@ -1,5 +1,19 @@
 # RidePet 更新日志（开发者版）
 
+## v1.1.2 — 2026/04/14
+
+### Bug 修复
+
+- **修复坐骑蛋类型编号自动添加逻辑误判**：`createPetEgg()` 中使用 `line.contains(petType.getId())` 判断 Lore 是否已包含类型信息，过于宽泛。当 Lore 描述中包含坐骑 id 字符串时（如赤兔的"马中赤兔"包含"赤兔"），误判为已有类型编号行，导致跳过添加 `[RidePet] 类型编号:` 行，坐骑蛋无法被 `isPetEgg()` 识别。
+  - 将判断条件从 `line.contains(petType.getId())` 改为 `line.contains("[RidePet] 类型编号:")`，精确匹配类型编号格式行。
+
+### 涉及文件
+
+| 文件 | 变更内容 |
+|------|---------|
+| `RidePet.java` | `createPetEgg()` 中类型编号判断条件从 `contains(petType.getId())` 改为 `contains("[RidePet] 类型编号:")` |
+
+
 ## v1.1.1 — 2026/04/14
 
 ### Bug 修复

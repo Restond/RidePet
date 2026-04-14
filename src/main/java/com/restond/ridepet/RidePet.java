@@ -277,7 +277,7 @@ public final class RidePet extends JavaPlugin {
 
         boolean hasPetId = false;
         for (String line : lore) {
-            if (line.contains(petType.getId())) {
+            if (line.contains("[RidePet] 类型编号:")) {
                 hasPetId = true;
                 break;
             }
