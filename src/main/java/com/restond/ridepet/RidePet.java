@@ -117,6 +117,9 @@ public final class RidePet extends JavaPlugin {
                     case "list":
                         handleList(sender, args);
                         break;
+                    case "delete":
+                        handleDelete(sender, args);
+                        break;
                     default:
                         sendHelp(sender);
                         break;
@@ -132,10 +135,20 @@ public final class RidePet extends JavaPlugin {
                     completions.add("reload");
                     completions.add("give");
                     completions.add("list");
+                    completions.add("delete");
                 } else if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
                     for (Player player : getServer().getOnlinePlayers()) {
                         if (player.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
                             completions.add(player.getName());
+                        }
+                    }
+                } else if (args.length == 2 && args[0].equalsIgnoreCase("delete")) {
+                    if (sender instanceof Player) {
+                        List<PetData> pets = petManager.getPlayerPets(((Player) sender).getUniqueId());
+                        for (PetData pet : pets) {
+                            if (pet.getPetTypeId().toLowerCase().startsWith(args[1].toLowerCase())) {
+                                completions.add(pet.getPetTypeId());
+                            }
                         }
                     }
                 } else if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
@@ -305,6 +318,7 @@ public final class RidePet extends JavaPlugin {
         sender.sendMessage("§e/ridepet reload §7- 重载配置");
         sender.sendMessage("§e/ridepet give <玩家> <类型> [等级] §7- 给予坐骑蛋");
         sender.sendMessage("§e/ridepet list §7- 列出坐骑类型");
+        sender.sendMessage("§e/ridepet delete <类型ID> §7- 删除坐骑");
     }
 
     public static RidePet getInstance() {
@@ -402,5 +416,47 @@ public final class RidePet extends JavaPlugin {
                 }
             }
         }.runTaskTimer(this, 20L * 10, 20L * 10);
+    }
+
+    private void handleDelete(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("§c该命令只能由玩家执行！");
+            return;
+        }
+
+        if (!sender.hasPermission("ridepet.use")) {
+            sender.sendMessage("§c你没有权限执行此命令！");
+            return;
+        }
+
+        if (args.length < 2) {
+            sender.sendMessage("§c用法: /ridepet delete <类型ID>");
+            return;
+        }
+
+        Player player = (Player) sender;
+        String typeId = args[1];
+        List<PetData> pets = petManager.getPlayerPets(player.getUniqueId());
+
+        PetData targetPet = null;
+        for (PetData pet : pets) {
+            if (pet.getPetTypeId().equals(typeId)) {
+                targetPet = pet;
+                break;
+            }
+        }
+
+        if (targetPet == null) {
+            sender.sendMessage("§c你没有该类型的坐骑！");
+            return;
+        }
+
+        if (targetPet.isActive()) {
+            petManager.forceRemovePet(player, targetPet);
+        }
+
+        pets.remove(targetPet);
+        sender.sendMessage("§c坐骑已删除！");
+        dataManager.savePlayerDataAsync(player.getUniqueId());
     }
 }

@@ -124,17 +124,16 @@ public class PlayerInteractListener implements Listener {
         List<PetData> pets = petManager.getPlayerPets(player.getUniqueId());
 
         if (eggPetType != null) {
-            boolean hasSameTypeAndLevel = false;
             PetData matchedPet = null;
             for (PetData pet : pets) {
-                if (pet.getPetTypeId().equals(eggPetType.getId()) && pet.getLevel() == eggLevel) {
-                    hasSameTypeAndLevel = true;
+                if (pet.getPetTypeId().equals(eggPetType.getId())) {
                     matchedPet = pet;
                     break;
                 }
             }
 
-            if (!hasSameTypeAndLevel) {
+            if (matchedPet == null) {
+                // 玩家没有该类型坐骑，直接创建
                 PetData newPet = eggPetType.createPetData(eggLevel);
                 if (petManager.addPetToPlayer(player.getUniqueId(), newPet)) {
                     if (!petManager.summonPet(player, newPet)) {
@@ -145,6 +144,39 @@ public class PlayerInteractListener implements Listener {
                 }
                 plugin.getDataManager().savePlayerDataAsync(player.getUniqueId());
                 return;
+            }
+
+            if (matchedPet.getLevel() != eggLevel) {
+                // 同类型不同等级 → 升级替换
+                if (matchedPet.isActive()) {
+                    petManager.forceRemovePet(player, matchedPet);
+                }
+                pets.remove(matchedPet);
+
+                PetData newPet = eggPetType.createPetData(eggLevel);
+                petManager.addPetToPlayer(player.getUniqueId(), newPet);
+                if (!petManager.summonPet(player, newPet)) {
+                    player.sendMessage("§c坐骑已升级但暂时无法召唤！");
+                } else {
+                    player.sendMessage("§a坐骑已升级为 Lv." + eggLevel + "！");
+                }
+                plugin.getDataManager().savePlayerDataAsync(player.getUniqueId());
+                return;
+            }
+
+            if (matchedPet.isExpired()) {
+                if (!isEggExpired(eggItem)) {
+                    long newExpireTime = getExpireTimeFromEgg(eggItem);
+                    if (newExpireTime > 0) {
+                        long newDuration = newExpireTime - System.currentTimeMillis();
+                        matchedPet.setAcquireTime(System.currentTimeMillis());
+                        matchedPet.setExpireMillis(newDuration);
+                    }
+                } else {
+                    player.sendMessage("§c该坐骑已超过使用时限！");
+                    plugin.getDataManager().savePlayerDataAsync(player.getUniqueId());
+                    return;
+                }
             }
 
             if (matchedPet.isActive()) {

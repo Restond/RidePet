@@ -1,5 +1,29 @@
 # RidePet 更新日志
 
+## v1.1.3 — 2026/04/19
+
+### 新功能
+
+- **新增删除坐骑命令**：`/ridepet delete <类型ID>`，玩家可删除自己拥有的指定类型坐骑。删除时若坐骑处于召唤状态会先收回。需要 `ridepet.use` 权限。
+  - `RidePet.java` 新增 `handleDelete()` 方法，命令 switch 和 Tab 补全均已适配。
+
+### 功能调整
+
+- **同类型坐骑自动升级替换**：使用不同等级的同类型坐骑蛋时，不再创建重复坐骑，而是自动替换为高等级坐骑。例如玩家已拥有 1 级马，再使用 2 级马蛋会自动升级为 2 级马，旧的 1 级坐骑会被收回并移除。
+  - `PlayerInteractListener.handleTogglePet()` 中匹配逻辑从"同类型且同等级"改为"同类型"；新增 `matchedPet.getLevel() != eggLevel` 分支处理升级替换。
+
+### Bug 修复
+
+- **修复过期坐骑用新蛋续期失败**：当玩家持有已过期的 PetData，再次获取同 ID 的新蛋（未过期）并左键使用时，`handleTogglePet` 匹配到旧 PetData 后直接尝试召唤，因 `isExpired()` 仍为 true 而失败。
+  - 在 `handleTogglePet` 中，当 `matchedPet.isExpired()` 时判断蛋是否过期：若蛋未过期，从蛋的 Lore 解析新到期时间，更新 PetData 的 `acquireTime` 和 `expireMillis` 实现续期；若蛋也过期，提示并返回。
+
+### 涉及文件
+
+| 文件 | 变更内容 |
+|------|---------|
+| `RidePet.java` | 新增 `handleDelete()` 方法；命令 switch 增加 `delete` 分支；Tab 补全增加 delete 参数；帮助信息增加 delete 条目 |
+| `PlayerInteractListener.java` | `handleTogglePet()` 中增加过期 PetData 续期逻辑；匹配逻辑改为同类型匹配，新增不同等级自动升级替换分支 |
+
 ## v1.1.2 — 2026/04/14
 
 ### Bug 修复
