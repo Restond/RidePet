@@ -52,9 +52,11 @@ public class PetManager {
         List<String> priority = configManager.getConfig().getStringList("attribute_priority");
         for (String name : priority) {
             if (name.equalsIgnoreCase("sx")) {
-                bridge = new SXAttributeBridge();
-                if (bridge.isEnabled()) break;
-                bridge = null;
+                if (plugin.getServer().getPluginManager().getPlugin("SX-Attribute") != null) {
+                    bridge = new SXAttributeBridge();
+                    if (bridge.isEnabled()) break;
+                    bridge = null;
+                }
             }
         }
         this.attributeBridge = bridge;
