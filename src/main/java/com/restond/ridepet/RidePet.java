@@ -35,7 +35,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 import org.bukkit.scheduler.BukkitRunnable;
 
 
@@ -65,7 +64,6 @@ public final class RidePet extends JavaPlugin {
         registerListeners();
         registerCommands();
         startAutoSaveTask();
-        startMemoryCleanupTask();
         startExpireCheckTask();
 
         getLogger().info("Ride 插件已启用! ");
@@ -187,6 +185,7 @@ public final class RidePet extends JavaPlugin {
         configManager.reload();
 
         for (Player player : getServer().getOnlinePlayers()) {
+            player.sendMessage("§e[RidePet] 配置重载中，坐骑将被暂时收回...");
             petManager.onPlayerQuit(player.getUniqueId());
         }
         petManager.getAllPlayerPets().clear();
@@ -350,33 +349,7 @@ public final class RidePet extends JavaPlugin {
                     getLogger().info("[自动保存] 已保存所有玩家坐骑数据");
                 }
             }
-        }.runTaskTimerAsynchronously(this, 20L * 60 * 60 * 24, 20L * 60 * 60 * 24);
-    }
-
-    private void startMemoryCleanupTask() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (petManager != null) {
-                    int cleaned = cleanupOfflinePlayerData();
-                    getLogger().info("[内存清理] 已清理 " + cleaned + " 个离线玩家数据");
-                }
-            }
-        }.runTaskTimer(this, 20L * 60 * 60 * 24 * 7, 20L * 60 * 60 * 24 * 7);
-    }
-
-    private int cleanupOfflinePlayerData() {
-        int cleaned = 0;
-
-        for (UUID playerUuid : new java.util.HashSet<>(petManager.getAllPlayerPets().keySet())) {
-            Player player = getServer().getPlayer(playerUuid);
-            if (player == null || !player.isOnline()) {
-                petManager.getAllPlayerPets().remove(playerUuid);
-                cleaned++;
-            }
-        }
-
-        return cleaned;
+        }.runTaskTimerAsynchronously(this, 20L * 60 * 5, 20L * 60 * 5);
     }
 
     private void startExpireCheckTask() {

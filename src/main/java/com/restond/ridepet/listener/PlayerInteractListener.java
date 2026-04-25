@@ -64,25 +64,15 @@ public class PlayerInteractListener implements Listener {
         boolean eggExpired = isEggExpired(item);
 
         if (eggExpired) {
-            boolean hasActivePet = false;
-            List<PetData> pets = petManager.getPlayerPets(player.getUniqueId());
-            for (PetData pet : pets) {
-                if (eggPetType != null && pet.getPetTypeId().equals(eggPetType.getId()) && pet.isActive()) {
-                    hasActivePet = true;
-                    break;
-                }
-            }
+            player.getInventory().setItemInMainHand(null);
+            player.sendMessage("§c该坐骑蛋已超过使用时限，已被移除！");
 
-            if (!hasActivePet) {
-                player.sendMessage("§c该坐骑蛋已超过使用时限！");
-                return;
-            }
-
-            if (event.getAction() == Action.LEFT_CLICK_AIR) {
+            if (eggPetType != null) {
+                List<PetData> pets = petManager.getPlayerPets(player.getUniqueId());
                 for (PetData pet : pets) {
                     if (pet.getPetTypeId().equals(eggPetType.getId()) && pet.isActive()) {
                         petManager.forceRemovePet(player, pet);
-                        player.sendMessage("§c该坐骑已超过使用时限，已自动收回！");
+                        player.sendMessage("§c该类型坐骑已超过使用时限，已自动收回！");
                         plugin.getDataManager().savePlayerDataAsync(player.getUniqueId());
                         break;
                     }

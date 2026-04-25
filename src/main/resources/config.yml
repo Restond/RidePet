@@ -1,5 +1,4 @@
 settings:
-  language: "zh_CN"
   debug: false
   combat_timeout: 10
 

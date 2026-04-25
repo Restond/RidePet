@@ -115,6 +115,11 @@ public class PetManager {
         spawnLoc.setZ(Math.floor(spawnLoc.getZ()) + 0.5);
         spawnLoc.setY(playerLoc.getY());
 
+        if (!isSafeSpawnLocation(spawnLoc)) {
+            player.sendMessage("§c当前位置无法召唤坐骑！（空间不足或危险区域）");
+            return false;
+        }
+
         Horse horse = (Horse) player.getWorld().spawnEntity(spawnLoc, org.bukkit.entity.EntityType.HORSE);
 
         horse.setAdult();
@@ -388,5 +393,16 @@ public class PetManager {
         }
 
         lastActionTime.remove(playerUuid);
+    }
+
+    private boolean isSafeSpawnLocation(Location loc) {
+        if (loc.getY() < 1) return false;
+
+        Material type = loc.getBlock().getType();
+        if (type.isSolid()) return false;
+        if (type == Material.LAVA || type == Material.STATIONARY_LAVA) return false;
+
+        Material headType = loc.clone().add(0, 1, 0).getBlock().getType();
+        return !headType.isSolid();
     }
 }

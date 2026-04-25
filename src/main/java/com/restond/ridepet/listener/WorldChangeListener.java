@@ -26,10 +26,16 @@ public class WorldChangeListener implements Listener {
         UUID playerUuid = player.getUniqueId();
         List<PetData> pets = petManager.getPlayerPets(playerUuid);
 
+        boolean recalled = false;
         for (PetData pet : pets) {
             if (pet.isActive()) {
                 petManager.forceRemovePet(player, pet);
+                recalled = true;
             }
+        }
+
+        if (recalled) {
+            player.sendMessage("§e切换世界，坐骑已自动收回！");
         }
 
         plugin.getDataManager().savePlayerDataAsync(playerUuid);

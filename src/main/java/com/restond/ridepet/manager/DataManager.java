@@ -25,6 +25,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -88,10 +89,37 @@ public class DataManager {
         petManager.loadPlayerData(playerUuid, pets);
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     public void savePlayerData(UUID playerUuid) {
         List<PetData> pets = petManager.getPlayerPets(playerUuid);
+        writePlayerData(playerUuid, pets);
+    }
 
+    public void saveAllPlayerData() {
+        Map<UUID, List<PetData>> allPets = petManager.getAllPlayerPets();
+        for (Map.Entry<UUID, List<PetData>> entry : allPets.entrySet()) {
+            writePlayerData(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public void savePlayerDataAsync(UUID playerUuid) {
+        List<PetData> snapshot = new ArrayList<>(petManager.getPlayerPets(playerUuid));
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> writePlayerData(playerUuid, snapshot));
+    }
+
+    public void saveAllPlayerDataAsync() {
+        Map<UUID, List<PetData>> snapshot = new HashMap<>();
+        for (Map.Entry<UUID, List<PetData>> entry : petManager.getAllPlayerPets().entrySet()) {
+            snapshot.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            for (Map.Entry<UUID, List<PetData>> entry : snapshot.entrySet()) {
+                writePlayerData(entry.getKey(), entry.getValue());
+            }
+        });
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private void writePlayerData(UUID playerUuid, List<PetData> pets) {
         File file = new File(dataFolder, playerUuid.toString() + ".yml");
         if (pets.isEmpty()) {
             if (file.exists()) {
@@ -112,19 +140,5 @@ public class DataManager {
         } catch (IOException e) {
             plugin.getLogger().warning("保存玩家数据失败:" + playerUuid + " - " + e.getMessage());
         }
-    }
-
-    public void saveAllPlayerData() {
-        for (Map.Entry<UUID, List<PetData>> entry : petManager.getAllPlayerPets().entrySet()) {
-            savePlayerData(entry.getKey());
-        }
-    }
-
-    public void savePlayerDataAsync(UUID playerUuid) {
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> savePlayerData(playerUuid));
-    }
-
-    public void saveAllPlayerDataAsync() {
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, this::saveAllPlayerData);
     }
 }

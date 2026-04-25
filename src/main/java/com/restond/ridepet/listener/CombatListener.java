@@ -27,7 +27,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,15 +44,8 @@ public class CombatListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onEntityDamage(EntityDamageEvent event) {
-        if (event.getEntity() instanceof Player) {
-            Player player = (Player) event.getEntity();
-            handleCombat(player);
-        }
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        // 玩家对其他实体造成伤害
         if (event.getDamager() instanceof Player) {
             Player attacker = (Player) event.getDamager();
             Entity victim = event.getEntity();
@@ -66,6 +58,12 @@ public class CombatListener implements Listener {
             }
 
             handleCombat(attacker);
+        }
+
+        // 玩家受到其他实体伤害
+        if (event.getEntity() instanceof Player) {
+            Player victim = (Player) event.getEntity();
+            handleCombat(victim);
         }
     }
 
